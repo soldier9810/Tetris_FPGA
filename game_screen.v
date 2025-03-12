@@ -32,8 +32,19 @@ module game_screen(
     output [11:0] vga,
     output hsync, vsync
     );
+    wire clockwise_db, anti_clkwise_db, down_db, left_db, right_db;
+    
     
     wire reset = ~resetn;
+    
+    
+    debouncing_circuit for_clockwise (clk, reset, clockwise, clockwise_db);
+    debouncing_circuit for_anti_clkwise (clk, reset, anti_clkwise, anti_clkwise_db);
+    debouncing_circuit for_down (clk, reset, down, down_db);
+    debouncing_circuit for_left (clk, reset, left, left_db);
+    debouncing_circuit for_right (clk, reset, right, right_db);
+    
+    
     reg [11:0] colour_calc;
     wire [9:0] x, y;
     localparam background = 12'b1000_0100_0100;
@@ -132,7 +143,7 @@ module game_screen(
     reg [2:0] movement; //  000 clockwise, 001 anti-clockwise, 010 down, 011 left, 100 right, 101 nothing
     
     always@(*) begin
-        case({clockwise, anti_clkwise, down, left, right})
+        case({clockwise_db, anti_clkwise_db, down_db, left_db, right_db})
             5'b10000: movement = 3'b000; //rotate clockwise
             5'b01000: movement = 3'b001; // rotate anticlowise
             5'b00100: movement = 3'b010; // move down quickly
