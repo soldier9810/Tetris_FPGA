@@ -25,7 +25,8 @@ module block_logic(
     input [2:0] block_type,
     output reg [3:0] x1,x2,x3,x4,
     output reg [4:0] y1,y2,y3,y4,
-    input [1:0] velocity
+    input [1:0] velocity,
+    input rotation
     );
     
     reg [24:0] speed;
@@ -35,6 +36,8 @@ module block_logic(
         else speed <= speed + 1'b1;
     end
     
+    reg [2:0] block_current, block_next;
+    
     reg [24:0] speed_wanted;
     
     always @(*) begin
@@ -42,11 +45,14 @@ module block_logic(
             2'b00: speed_wanted = 25'b1110010011100001110000000;
             2'b01: speed_wanted = 25'b0100110001001011010000000;
             2'b10: speed_wanted = 25'b0100010010101010001000000;
-            default: speed_wanted = 25'b1110010011100001110000000;
+            2'b11: speed_wanted = {25{1'b1}};
         endcase
     end
     
     wire speed_reached = (speed == speed_wanted) ? 1'b1 : 1'b0;
+    
+    wire block_reset = (block_current != block_next) | reset;
+    
     
     //1: line, 2: square, 3: inverted T, 4: S, 5: Z, 6: J, 7: L;
     // config 00, 01 are 0 and 180 degree configurations
@@ -103,7 +109,7 @@ module block_logic(
         y3_next = y3;
         y4_next = y4;
         
-        case(block_type)
+        case(block_current)
             3'd1: begin // line
                 casex(movement)
                     3'b00x: begin 
@@ -286,18 +292,6 @@ module block_logic(
 
                             end
                     end
-                    
-                    default: begin
-                        x1_next = x1;
-                        x2_next = x2;
-                        x3_next = x3;
-                        x4_next = x4;
-                        
-                        y1_next = y1;
-                        y2_next = y2;
-                        y3_next = y3;
-                        y4_next = y4; 
-                     end
                 endcase
             end
             
@@ -755,18 +749,7 @@ module block_logic(
                                 y3_next = y3;
                                 y4_next = y4 - 5'd1;
                             end
-                            
-                            default: begin
-                                x1_next = x1;
-                                x2_next = x2;
-                                x3_next = x3;
-                                x4_next = x4;
-                                
-                                y1_next = y1;
-                                y2_next = y2;
-                                y3_next = y3;
-                                y4_next = y4;
-                            end
+
                         endcase  
                     end
                     
@@ -816,18 +799,6 @@ module block_logic(
                                 
                                 y1_next = y1 + 5'd1;
                                 y2_next = y2 + 5'd1;
-                                y3_next = y3;
-                                y4_next = y4;
-                            end
-                            
-                            default: begin
-                                x1_next = x1;
-                                x2_next = x2;
-                                x3_next = x3;
-                                x4_next = x4;
-                                
-                                y1_next = y1;
-                                y2_next = y2;
                                 y3_next = y3;
                                 y4_next = y4;
                             end
@@ -951,18 +922,7 @@ module block_logic(
                                 y3_next = y3 - 5'd1;
                                 y4_next = y4 - 5'd1;
                             end
-                            
-                            default: begin
-                                x1_next = x1;
-                                x2_next = x2;
-                                x3_next = x3;
-                                x4_next = x4;
-                                
-                                y1_next = y1;
-                                y2_next = y2;
-                                y3_next = y3;
-                                y4_next = y4;
-                            end
+
                         endcase  
                     end
                     
@@ -1013,18 +973,6 @@ module block_logic(
                                 y1_next = y1 + 5'd1;
                                 y2_next = y2;
                                 y3_next = y3 - 5'd1;
-                                y4_next = y4;
-                            end
-                            
-                            default: begin
-                                x1_next = x1;
-                                x2_next = x2;
-                                x3_next = x3;
-                                x4_next = x4;
-                                
-                                y1_next = y1;
-                                y2_next = y2;
-                                y3_next = y3;
                                 y4_next = y4;
                             end
                         endcase  
@@ -1172,18 +1120,6 @@ module block_logic(
 
                             end
                     end
-                    
-                    default: begin
-                        x1_next = x1;
-                        x2_next = x2;
-                        x3_next = x3;
-                        x4_next = x4;
-                        
-                        y1_next = y1;
-                        y2_next = y2;
-                        y3_next = y3;
-                        y4_next = y4; 
-                     end
                 endcase
             end
            
@@ -1211,9 +1147,57 @@ module block_logic(
     localparam j1_initial = {4'd6, 5'd0}, j2_initial = {4'd4, 5'd1};
     localparam j3_initial = {4'd5, 5'd1}, j4_initial = {4'd6, 5'd1};
     
+    wire x1_oob = x1_next > 4'd9 | x1_next < 0;
+    wire x2_oob = x2_next > 4'd9 | x2_next < 0;
+    wire x3_oob = x3_next > 4'd9 | x3_next < 0;
+    wire x4_oob = x4_next > 4'd9 | x4_next < 0;
+    
+//    wire [3:0] x1_next_constrained;
+//    wire [3:0] x2_next_constrained;
+//    wire [3:0] x3_next_constrained;
+//    wire [3:0] x4_next_constrained;
+    
+//    assign {x1_next_constrained, x2_next_constrained, x3_next_constrained, x4_next_constrained} = (x1_oob | x2_oob | x3_oob | x4_oob) ? {x1, x2, x3, x4} : {x1_next, x2_next, x3_next, x4_next};
+    
+//    reg [3:0] y1_next_constrained;
+//    reg [3:0] y2_next_constrained;
+//    reg [3:0] y3_next_constrained;
+//    reg [3:0] y4_next_constrained;
+    
+//    always @(*) begin
+//        case(x1_oob | x2_oob | x3_oob | x4_oob)
+//            1'b0: begin
+//                y1_next_constrained = y1_next;
+//                y2_next_constrained = y2_next;
+//                y3_next_constrained = y3_next;
+//                y4_next_constrained = y4_next;
+//            end
+//            1'b1: begin
+//                if (speed_reached) begin
+//                            y1_next_constrained = y1 + 5'd1;
+//                            y2_next_constrained = y2 + 5'd1;
+//                            y3_next_constrained = y3 + 5'd1;
+//                            y4_next_constrained = y4 + 5'd1; 
+//                        end
+//                        else begin
+//                            x1_next = x1;
+//                            x2_next = x2;
+//                            x3_next = x3;
+//                            x4_next = x4;
+                            
+//                            y1_next = y1;
+//                            y2_next = y2;
+//                            y3_next = y3;
+//                            y4_next = y4;
+
+//                            end
+//            end
+//        endcase
+//    end
+    
     //1: line, 2: square, 3: inverted T, 4: S, 5: Z, 6: J, 7: L
     always @(posedge clk) begin
-        if (reset) begin
+        if (block_reset) begin
             case(block_type)
                 3'd1: {x1,y1,x2,y2,x3,y3,x4,y4} <= {line1_initial, line2_initial, line3_initial, line4_initial};
                 3'd2: {x1,y1,x2,y2,x3,y3,x4,y4} <= {sq1_initial, sq2_initial, sq3_initial, sq4_initial};
@@ -1224,6 +1208,7 @@ module block_logic(
                 3'd7: {x1,y1,x2,y2,x3,y3,x4,y4} <= {l1_initial, l2_initial, l3_initial, l4_initial};
             endcase
             config_current <= 2'b00;
+            block_current <= block_next;
         end
         else begin
             x1 <= x1_next;
@@ -1235,6 +1220,10 @@ module block_logic(
             y3 <= y3_next;
             y4 <= y4_next;
             config_current <= config_next;
+            block_next <= block_type;
+            block_current <= block_next;
+            
+            
         end
     end    
 endmodule

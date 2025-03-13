@@ -141,23 +141,44 @@ module game_screen(
     assign block4_y = 10'd11 + (10'd23)*(y4);
     
     reg [2:0] movement; //  000 clockwise, 001 anti-clockwise, 010 down, 011 left, 100 right, 101 nothing
-    
+    reg rotation;
     always@(*) begin
         case({clockwise_db, anti_clkwise_db, down_db, left_db, right_db})
-            5'b10000: movement = 3'b000; //rotate clockwise
-            5'b01000: movement = 3'b001; // rotate anticlowise
-            5'b00100: movement = 3'b010; // move down quickly
-            5'b00010: movement = 3'b011; // move left
-            5'b00001: movement = 3'b100; // move right
-            default: movement = 3'b101; // on no input will move down automatically at a certain velocity
+            5'b10000: {rotation, movement} = 4'b1000; //rotate clockwise
+            5'b01000: {rotation, movement} = 4'b1001; // rotate anticlowise
+            5'b00100: {rotation, movement} = 4'b0010; // move down quickly
+            5'b00010: {rotation, movement} = 4'b0011; // move left
+            5'b00001: {rotation, movement} = 4'b0100; // move right
+            default: {rotation, movement} = 4'b0101; // on no input will move down automatically at a certain velocity
+        endcase
+    end
+    
+    reg [11:0] block_colour;
+    
+    localparam yellow = 12'b0000_1111_1111;
+    localparam magenta = 12'b1111_0000_1111;
+    localparam green = 12'b0000_1111_1000;
+    localparam orange = 12'b0000_1000_1111;
+    localparam red = 12'b0000_0000_1111;
+    localparam blue = 12'b1111_0000_0000;
+    localparam light_blue = 12'b1100_0000_0000;
+    
+    block_logic blocks(clk, reset, movement, block_type, x1,x2,x3,x4, y1,y2,y3,y4, velocity, rotation);
+    
+    always @(*) begin
+        case(block_type)
+            3'd1: block_colour = blue;
+            3'd2: block_colour = yellow;
+            3'd3: block_colour = magenta;
+            3'd4: block_colour = green;
+            3'd5: block_colour = orange;
+            3'd6: block_colour = red;
+            3'd7: block_colour = light_blue;
+            default: block_colour = 0;
         endcase
     end
     
     
-    
-    block_logic blocks(clk, reset, movement, block_type, x1,x2,x3,x4, y1,y2,y3,y4, velocity);
-    
-    wire [11:0] block_colour = 12'b0000_0000_1111;
     
     always @(*) begin
     
