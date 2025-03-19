@@ -26,7 +26,7 @@ module block_logic(
     output reg [3:0] x1,x2,x3,x4,
     output reg [4:0] y1,y2,y3,y4,
     input [1:0] velocity,
-    input rotation
+    input rotation, block_settling_reset
     );
     
     reg [24:0] speed;
@@ -51,7 +51,7 @@ module block_logic(
     
     wire speed_reached = (speed == speed_wanted) ? 1'b1 : 1'b0;
     
-    wire block_reset = (block_current != block_next) | reset;
+    wire block_reset = (block_current != block_next) | reset | block_settling_reset;
     
     
     //1: line, 2: square, 3: inverted T, 4: S, 5: Z, 6: J, 7: L;

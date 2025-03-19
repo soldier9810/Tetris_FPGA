@@ -47,8 +47,10 @@ module game_screen(
     
     reg [11:0] colour_calc;
     wire [9:0] x, y;
-    localparam background = 12'b1000_0100_0100;
-    localparam middle = 12'b1111_0111_0000;
+    //localparam background = 12'b1000_0100_0100;
+    localparam background = 12'b0;
+    //localparam middle = 12'b1111_0111_0000;
+    localparam middle = {12{1'b0}};
     localparam white = {12{1'b1}};
     localparam left_x = 10'd203, right_x = 10'd433, top = 10'd11, bottom = 10'd471;
     
@@ -163,7 +165,9 @@ module game_screen(
     localparam blue = 12'b1111_0000_0000;
     localparam light_blue = 12'b1100_0000_0000;
     
-    block_logic blocks(clk, reset, movement, block_type, x1,x2,x3,x4, y1,y2,y3,y4, velocity, rotation);
+    wire block_settling_reset;
+    
+    block_logic blocks(clk, reset, movement, block_type, x1,x2,x3,x4, y1,y2,y3,y4, velocity, rotation, block_settling_reset);
     
     always @(*) begin
         case(block_type)
@@ -180,8 +184,20 @@ module game_screen(
     
     wire [11:0] middle_color; 
     
-    block_settling BS(x, y, clk, reset, y1, y2, y3, y4, x1, x2, x3, x4, middle_color);
+    wire [3:0] x_b;
+    wire [4:0] y_b;
+    wire border_x, border_y;
     
+    board_implementation BoIm(clk, reset, x, y, x_b, y_b, border_x, border_y);
+    
+    
+    
+    block_settling BS(x_b, y_b, clk, reset, y1, y2, y3, y4, x1, x2, x3, x4, block_type, middle_color, block_settling_reset);
+    
+    
+    wire scrn_at_blocks = ((x<=(block1_x + 10'd21) && x>=block1_x && y>=block1_y && y<=(block1_y + 10'd21)) || (x<=(block2_x + 10'd21) && x>=block2_x && y>=block2_y && y<=(block2_y + 10'd21)) || (x<=(block3_x + 10'd21) && x>=block3_x && y>=block3_y && y<=(block3_y + 10'd21)) || (x<=(block4_x + 10'd21) && x>=block4_x && y>=block4_y && y<=(block4_y + 10'd21)));
+    
+    localparam border_color = 0;
     
     always @(*) begin
     
@@ -190,7 +206,13 @@ module game_screen(
             5'b01000: colour_calc = (scrn_at_hndrd[6]&&hndrd_a || scrn_at_hndrd[5]&&hndrd_b || scrn_at_hndrd[4]&&hndrd_c || scrn_at_hndrd[3]&&hndrd_d || scrn_at_hndrd[2]&&hndrd_e || scrn_at_hndrd[1]&&hndrd_f || scrn_at_hndrd[0]&&hndrd_g) ? white : background;
             5'b00100: colour_calc = (scrn_at_tens[6]&&tens_a || scrn_at_tens[5]&&tens_b || scrn_at_tens[4]&&tens_c || scrn_at_tens[3]&&tens_d || scrn_at_tens[2]&&tens_e || scrn_at_tens[1]&&tens_f || scrn_at_tens[0]&&tens_g) ? white : background;
             5'b00010: colour_calc = (scrn_at_units[6]&&units_a || scrn_at_units[5]&&units_b || scrn_at_units[4]&&units_c || scrn_at_units[3]&&units_d || scrn_at_units[2]&&units_e || scrn_at_units[1]&&units_f || scrn_at_units[0]&&units_g) ? white : background;
-            5'b00001: colour_calc = ((x<=(block1_x + 10'd21) && x>=block1_x && y>=block1_y && y<=(block1_y + 10'd21)) || (x<=(block2_x + 10'd21) && x>=block2_x && y>=block2_y && y<=(block2_y + 10'd21)) || (x<=(block3_x + 10'd21) && x>=block3_x && y>=block3_y && y<=(block3_y + 10'd21)) || (x<=(block4_x + 10'd21) && x>=block4_x && y>=block4_y && y<=(block4_y + 10'd21))) ? block_colour : middle_color;
+            5'b00001: begin
+            //colour_calc = scrn_at_blocks ? block_colour : middle_color;
+                if (x1 == x_b & y1 == y_b || x2 == x_b & y2 == y_b || x3 == x_b & y3 == y_b || x4 == x_b & y4 == y_b) begin
+                    colour_calc = (border_x | border_y) ? border_color: block_colour;
+                end
+                else colour_calc = (border_x | border_y) ? border_color:middle_color;
+            end
             default: colour_calc = background;
         endcase
     end
