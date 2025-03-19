@@ -27,8 +27,8 @@
 module game_screen(
     input clk, resetn,
     input clockwise, anti_clkwise, down,left,right,
-    input [1:0] velocity,
     input [2:0] block_type,
+    input [1:0] velocity,
     output [11:0] vga,
     output hsync, vsync
     );
@@ -37,6 +37,9 @@ module game_screen(
     
     wire reset = ~resetn;
     
+    //wire [2:0] block_type;
+    
+    //RaNuGe (clk, reset, block_settling_reset, block_type);
     
     debouncing_circuit for_clockwise (clk, reset, clockwise, clockwise_db);
     debouncing_circuit for_anti_clkwise (clk, reset, anti_clkwise, anti_clkwise_db);

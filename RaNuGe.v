@@ -21,7 +21,7 @@
 
 
 module RaNuGe(
-    input clk, reset,
+    input clk, reset, block_new,
     output reg [2:0] random_number
     );
     
@@ -29,13 +29,16 @@ module RaNuGe(
     
     always @(*) begin
 //        if (play) next = initial_count;
-//        else 
+//        else
     next = {random_number[2]^random_number[1], random_number[2:1]};
     end
     
     always @(posedge clk) begin
         if (reset) random_number <= 1'b1;
-        else random_number <= next;
+        else begin
+            if (block_new) random_number <= next;
+            else random_number <= random_number;
+        end
     end
 
 endmodule
