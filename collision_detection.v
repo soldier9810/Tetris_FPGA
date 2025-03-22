@@ -26,9 +26,6 @@ module collision_detection(
     );
     
     
-    wire [0:11] matrix [0:21];
-    assign matrix[0][1] = 1'b1;
-    
     wire left_oob = (x1 == 4'd15 | x1 == 4'd14) | (x2 == 4'd15 | x2 == 4'd14) | (x3 == 4'd15 | x3 == 4'd14) | (x4 == 4'd15 | x4 == 4'd14);
     wire right_oob = x1 > 9 | x2 > 9 | x3 > 9 | x4 > 9;
         

@@ -27,19 +27,28 @@
 module game_screen(
     input clk, resetn,
     input clockwise, anti_clkwise, down,left,right,
-    input [2:0] block_type,
     input [1:0] velocity,
     output [11:0] vga,
     output hsync, vsync
     );
     wire clockwise_db, anti_clkwise_db, down_db, left_db, right_db;
     
+    wire block_settling_reset;
+    
+    wire [4:0] changed_y1, changed_y2, changed_y3, changed_y4;
     
     wire reset = ~resetn;
     
-    //wire [2:0] block_type;
+    wire [3:0] x1_next_out, x2_next_out, x3_next_out, x4_next_out;
+    wire [4:0] y1_next_out, y2_next_out, y3_next_out, y4_next_out;
     
-    //RaNuGe (clk, reset, block_settling_reset, block_type);
+    wire random_block_reset = reset | block_settling_reset;
+    
+    wire [15:0] score;
+    
+    
+    wire [2:0] block_type;
+    RaNuGe random(clk, reset, random_block_reset, block_type);
     
     debouncing_circuit for_clockwise (clk, reset, clockwise, clockwise_db);
     debouncing_circuit for_anti_clkwise (clk, reset, anti_clkwise, anti_clkwise_db);
@@ -78,10 +87,10 @@ module game_screen(
     wire tens_a, tens_b, tens_c, tens_d, tens_e, tens_f, tens_g;
     wire units_a, units_b, units_c, units_d, units_e, units_f, units_g;
     
-    segment7 thousands(4'b1111, thsnd_a, thsnd_b, thsnd_c, thsnd_d, thsnd_e, thsnd_f, thsnd_g);
-    segment7 hundreds(4'b1111, hndrd_a, hndrd_b, hndrd_c, hndrd_d, hndrd_e, hndrd_f, hndrd_g);
-    segment7 tens_place(4'b1111, tens_a, tens_b, tens_c, tens_d, tens_e, tens_f, tens_g);
-    segment7 units_place(4'b1111, units_a, units_b, units_c, units_d, units_e, units_f, units_g);
+    segment7 thousands(score[15:12], thsnd_a, thsnd_b, thsnd_c, thsnd_d, thsnd_e, thsnd_f, thsnd_g);
+    segment7 hundreds(score[11:8], hndrd_a, hndrd_b, hndrd_c, hndrd_d, hndrd_e, hndrd_f, hndrd_g);
+    segment7 tens_place(score[7:4], tens_a, tens_b, tens_c, tens_d, tens_e, tens_f, tens_g);
+    segment7 units_place(score[3:0], units_a, units_b, units_c, units_d, units_e, units_f, units_g);
     
     wire [6:0] scrn_at_thsnd = {(x<=thsnd_right && x>=thsnd_left && y>=a_top && y<=a_bottom), //a
                                 (x<=thsnd_right && x>=thsnd_b_left && y>=b_top && y<=b_bottom), //b
@@ -135,6 +144,8 @@ module game_screen(
     wire [9:0] block1_x, block2_x, block3_x, block4_x;
     wire [9:0] block1_y, block2_y, block3_y, block4_y;
     
+    wire [3:0] changed_x1, changed_x2, changed_x3, changed_x4;
+    
     assign block1_x = 10'd203 + (10'd23)*(x1);
     assign block2_x = 10'd203 + (10'd23)*(x2);
     assign block3_x = 10'd203 + (10'd23)*(x3);
@@ -145,16 +156,16 @@ module game_screen(
     assign block3_y = 10'd11 + (10'd23)*(y3);
     assign block4_y = 10'd11 + (10'd23)*(y4);
     
-    reg [2:0] movement; //  000 clockwise, 001 anti-clockwise, 010 down, 011 left, 100 right, 101 nothing
-    reg rotation;
+    reg [3:0] movement; //  000 clockwise, 001 anti-clockwise, 010 down, 011 left, 100 right, 101 nothing
+
     always@(*) begin
         case({clockwise_db, anti_clkwise_db, down_db, left_db, right_db})
-            5'b10000: {rotation, movement} = 4'b1000; //rotate clockwise
-            5'b01000: {rotation, movement} = 4'b1001; // rotate anticlowise
-            5'b00100: {rotation, movement} = 4'b0010; // move down quickly
-            5'b00010: {rotation, movement} = 4'b0011; // move left
-            5'b00001: {rotation, movement} = 4'b0100; // move right
-            default: {rotation, movement} = 4'b0101; // on no input will move down automatically at a certain velocity
+            5'b10000: movement = 4'b0000; //rotate clockwise
+            5'b01000: movement = 4'b0001; // rotate anticlowise
+            5'b00100: movement = 4'b0010; // move down quickly
+            5'b00010: movement = 4'b0011; // move left
+            5'b00001: movement = 4'b0100; // move right
+            default: movement = 4'b0101; // on no input will move down automatically at a certain velocity
         endcase
     end
     
@@ -166,11 +177,11 @@ module game_screen(
     localparam orange = 12'b0000_1000_1111;
     localparam red = 12'b0000_0000_1111;
     localparam blue = 12'b1111_0000_0000;
-    localparam light_blue = 12'b1100_0000_0000;
+    localparam light_blue = 12'b1101_1101_0100;
     
-    wire block_settling_reset;
     
-    block_logic blocks(clk, reset, movement, block_type, x1,x2,x3,x4, y1,y2,y3,y4, velocity, rotation, block_settling_reset);
+    
+    block_logic blocks(clk, reset, movement, block_type, x1,x2,x3,x4, y1,y2,y3,y4, velocity, block_settling_reset, x1_next_out, x2_next_out, x3_next_out, x4_next_out, y1_next_out, y2_next_out, y3_next_out, y4_next_out, changed_x1, changed_x2, changed_x3, changed_x4, changed_y1, changed_y2, changed_y3, changed_y4);
     
     always @(*) begin
         case(block_type)
@@ -195,12 +206,11 @@ module game_screen(
     
     
     
-    block_settling BS(x_b, y_b, clk, reset, y1, y2, y3, y4, x1, x2, x3, x4, block_type, middle_color, block_settling_reset);
     
+    block_settling BS(x_b, y_b, clk, reset, y1, y2, y3, y4, x1, x2, x3, x4, block_type, middle_color, block_settling_reset, x1_next_out, x2_next_out, x3_next_out, x4_next_out, y1_next_out, y2_next_out, y3_next_out, y4_next_out, movement, changed_x1, changed_x2, changed_x3, changed_x4, changed_y1, changed_y2, changed_y3, changed_y4, score);
     
-    wire scrn_at_blocks = ((x<=(block1_x + 10'd21) && x>=block1_x && y>=block1_y && y<=(block1_y + 10'd21)) || (x<=(block2_x + 10'd21) && x>=block2_x && y>=block2_y && y<=(block2_y + 10'd21)) || (x<=(block3_x + 10'd21) && x>=block3_x && y>=block3_y && y<=(block3_y + 10'd21)) || (x<=(block4_x + 10'd21) && x>=block4_x && y>=block4_y && y<=(block4_y + 10'd21)));
-    
-    localparam border_color = 0;
+       
+    localparam border_color = 12'b0001_0001_0001;
     
     always @(*) begin
     
@@ -210,11 +220,11 @@ module game_screen(
             5'b00100: colour_calc = (scrn_at_tens[6]&&tens_a || scrn_at_tens[5]&&tens_b || scrn_at_tens[4]&&tens_c || scrn_at_tens[3]&&tens_d || scrn_at_tens[2]&&tens_e || scrn_at_tens[1]&&tens_f || scrn_at_tens[0]&&tens_g) ? white : background;
             5'b00010: colour_calc = (scrn_at_units[6]&&units_a || scrn_at_units[5]&&units_b || scrn_at_units[4]&&units_c || scrn_at_units[3]&&units_d || scrn_at_units[2]&&units_e || scrn_at_units[1]&&units_f || scrn_at_units[0]&&units_g) ? white : background;
             5'b00001: begin
-            //colour_calc = scrn_at_blocks ? block_colour : middle_color;
+                
                 if (x1 == x_b & y1 == y_b || x2 == x_b & y2 == y_b || x3 == x_b & y3 == y_b || x4 == x_b & y4 == y_b) begin
                     colour_calc = (border_x | border_y) ? border_color: block_colour;
                 end
-                else colour_calc = (border_x | border_y) ? border_color:middle_color;
+                else colour_calc = (border_x | border_y) ? border_color: middle_color;
             end
             default: colour_calc = background;
         endcase
