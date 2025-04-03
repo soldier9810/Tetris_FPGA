@@ -26,12 +26,13 @@
 
 module game_screen(
     input clk, resetn,
-    input clockwise, anti_clkwise, down,left,right,
+    input clockwise_db, anti_clkwise_db, down_db,left_db,right_db,
     input [1:0] velocity,
-    output [11:0] vga,
-    output hsync, vsync
+    input [9:0] x, y,
+    output reg [11:0] colour_calc,
+    input ce
     );
-    wire clockwise_db, anti_clkwise_db, down_db, left_db, right_db;
+    //wire clockwise_db, anti_clkwise_db, down_db, left_db, right_db;
     
     wire block_settling_reset;
     
@@ -48,17 +49,17 @@ module game_screen(
     
     
     wire [2:0] block_type;
-    RaNuGe random(clk, reset, random_block_reset, block_type);
+    RaNuGe random(clk, reset, random_block_reset, block_type, ce);
     
-    debouncing_circuit for_clockwise (clk, reset, clockwise, clockwise_db);
-    debouncing_circuit for_anti_clkwise (clk, reset, anti_clkwise, anti_clkwise_db);
-    debouncing_circuit for_down (clk, reset, down, down_db);
-    debouncing_circuit for_left (clk, reset, left, left_db);
-    debouncing_circuit for_right (clk, reset, right, right_db);
+//    debouncing_circuit for_clockwise (clk, reset, clockwise, clockwise_db);
+//    debouncing_circuit for_anti_clkwise (clk, reset, anti_clkwise, anti_clkwise_db);
+//    debouncing_circuit for_down (clk, reset, down, down_db);
+//    debouncing_circuit for_left (clk, reset, left, left_db);
+//    debouncing_circuit for_right (clk, reset, right, right_db);
     
     
-    reg [11:0] colour_calc;
-    wire [9:0] x, y;
+    //reg [11:0] colour_calc;
+    //wire [9:0] x, y;
     //localparam background = 12'b1000_0100_0100;
     localparam background = 12'b0;
     //localparam middle = 12'b1111_0111_0000;
@@ -135,7 +136,7 @@ module game_screen(
     
     
     
-    VGA vga_circuit(clk, reset, colour_calc, hsync, vsync, vga, x, y);
+    //VGA vga_circuit(clk, reset, colour_calc, hsync, vsync, vga, x, y);
     
     
     wire [3:0] x1, x2, x3, x4;
@@ -181,7 +182,7 @@ module game_screen(
     
     
     
-    block_logic blocks(clk, reset, movement, block_type, x1,x2,x3,x4, y1,y2,y3,y4, velocity, block_settling_reset, x1_next_out, x2_next_out, x3_next_out, x4_next_out, y1_next_out, y2_next_out, y3_next_out, y4_next_out, changed_x1, changed_x2, changed_x3, changed_x4, changed_y1, changed_y2, changed_y3, changed_y4);
+    block_logic blocks(clk, reset, movement, block_type, x1,x2,x3,x4, y1,y2,y3,y4, velocity, block_settling_reset, x1_next_out, x2_next_out, x3_next_out, x4_next_out, y1_next_out, y2_next_out, y3_next_out, y4_next_out, changed_x1, changed_x2, changed_x3, changed_x4, changed_y1, changed_y2, changed_y3, changed_y4, ce);
     
     always @(*) begin
         case(block_type)
@@ -202,12 +203,12 @@ module game_screen(
     wire [4:0] y_b;
     wire border_x, border_y;
     
-    board_implementation BoIm(clk, reset, x, y, x_b, y_b, border_x, border_y);
+    board_implementation BoIm(clk, reset, x, y, x_b, y_b, border_x, border_y, ce);
     
     
     
     
-    block_settling BS(x_b, y_b, clk, reset, y1, y2, y3, y4, x1, x2, x3, x4, block_type, middle_color, block_settling_reset, x1_next_out, x2_next_out, x3_next_out, x4_next_out, y1_next_out, y2_next_out, y3_next_out, y4_next_out, movement, changed_x1, changed_x2, changed_x3, changed_x4, changed_y1, changed_y2, changed_y3, changed_y4, score);
+    block_settling BS(x_b, y_b, clk, reset, y1, y2, y3, y4, x1, x2, x3, x4, block_type, middle_color, block_settling_reset, x1_next_out, x2_next_out, x3_next_out, x4_next_out, y1_next_out, y2_next_out, y3_next_out, y4_next_out, movement, changed_x1, changed_x2, changed_x3, changed_x4, changed_y1, changed_y2, changed_y3, changed_y4, score, ce);
     
        
     localparam border_color = 12'b0001_0001_0001;

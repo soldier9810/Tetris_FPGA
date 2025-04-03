@@ -30,14 +30,15 @@ module block_logic(
     output [3:0] x1_next_out, x2_next_out, x3_next_out, x4_next_out, 
     output [4:0] y1_next_out, y2_next_out, y3_next_out, y4_next_out,
     input [3:0] changed_x1, changed_x2, changed_x3, changed_x4,
-    input [4:0] changed_y1, changed_y2, changed_y3, changed_y4
+    input [4:0] changed_y1, changed_y2, changed_y3, changed_y4,
+    input ce
     );
     
     reg [24:0] speed;
     
     always @(posedge clk) begin
         if (reset) speed <= 0;
-        else speed <= speed + 1'b1;
+        else if (ce) speed <= speed + 1'b1;
     end
     
     reg [2:0] block_current, block_next;
@@ -1188,7 +1189,7 @@ module block_logic(
             config_current <= 2'b00;
             block_current <= block_next;
         end
-        else begin
+        else if (ce) begin
             x1 <= changed_x1;
             x2 <= changed_x2;
             x3 <= changed_x3;

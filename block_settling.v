@@ -34,8 +34,12 @@ module block_settling(
     input [3:0] movement,
     output reg [3:0] changed_x1, changed_x2, changed_x3, changed_x4,
     output reg [4:0] changed_y1, changed_y2, changed_y3, changed_y4,
-    output reg [15:0] score
+    output reg [15:0] score,
+    input ce
     );
+    
+    (* rom_style = "block" *)
+    
     //localparam middle = 12'b1111_0111_0000;
     localparam middle = {12{1'b0}};
     localparam white = {12{1'b1}};
@@ -86,7 +90,7 @@ module block_settling(
             score <= 0;
 
         end
-        else begin
+        else if (ce)  begin
             if (oob) begin
                 matrix[y1][x1] <= 1'b1;
                 matrix[y2][x2] <= 1'b1;
