@@ -35,7 +35,8 @@ module block_settling(
     output reg [3:0] changed_x1, changed_x2, changed_x3, changed_x4,
     output reg [4:0] changed_y1, changed_y2, changed_y3, changed_y4,
     output reg [15:0] score,
-    input ce
+    input ce,
+    output game_over_logic
     );
     
     (* rom_style = "block" *)
@@ -60,7 +61,7 @@ module block_settling(
     
     
     wire oob = matrix[y1p][x1] | matrix[y2p][x2] | matrix[y3p][x3] | matrix[y4p][x4];
-    
+    assign game_over_logic = matrix[2][3] | matrix[2][4] | matrix[2][5] | matrix[2][6]; 
     integer i,j,a,new_a,l,m;
     
     always @(posedge clk) begin

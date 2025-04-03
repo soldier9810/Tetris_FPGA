@@ -30,15 +30,18 @@ module game_screen(
     input [1:0] velocity,
     input [9:0] x, y,
     output reg [11:0] colour_calc,
-    input ce
+    input ce,
+    output game_over_logic
     );
     //wire clockwise_db, anti_clkwise_db, down_db, left_db, right_db;
+    
+    wire game_over = game_over_logic;
     
     wire block_settling_reset;
     
     wire [4:0] changed_y1, changed_y2, changed_y3, changed_y4;
     
-    wire reset = ~resetn;
+    wire reset = ~resetn | game_over;
     
     wire [3:0] x1_next_out, x2_next_out, x3_next_out, x4_next_out;
     wire [4:0] y1_next_out, y2_next_out, y3_next_out, y4_next_out;
@@ -208,7 +211,7 @@ module game_screen(
     
     
     
-    block_settling BS(x_b, y_b, clk, reset, y1, y2, y3, y4, x1, x2, x3, x4, block_type, middle_color, block_settling_reset, x1_next_out, x2_next_out, x3_next_out, x4_next_out, y1_next_out, y2_next_out, y3_next_out, y4_next_out, movement, changed_x1, changed_x2, changed_x3, changed_x4, changed_y1, changed_y2, changed_y3, changed_y4, score, ce);
+    block_settling BS(x_b, y_b, clk, reset, y1, y2, y3, y4, x1, x2, x3, x4, block_type, middle_color, block_settling_reset, x1_next_out, x2_next_out, x3_next_out, x4_next_out, y1_next_out, y2_next_out, y3_next_out, y4_next_out, movement, changed_x1, changed_x2, changed_x3, changed_x4, changed_y1, changed_y2, changed_y3, changed_y4, score, ce, game_over_logic);
     
        
     localparam border_color = 12'b0001_0001_0001;
