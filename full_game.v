@@ -25,7 +25,7 @@ module full_game(
     output hsync, vsync,
     output [11:0] vga    
     );
-    
+    reg [11:0] colour_calc2;
     wire reset = ~resetn;
     wire [1:0] velocity = 2'b00;
     wire [11:0] colour_calc_gs, colour_calc_play, colour_calc_go;
@@ -111,7 +111,7 @@ module full_game(
     
     localparam white = {12{1'b1}};
     
-    reg [11:0] colour_calc2;
+    
     
     always @(*) begin
         case ({l1_box,l2_box,l3_box})
