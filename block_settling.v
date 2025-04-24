@@ -45,7 +45,7 @@ module block_settling(
     localparam middle = {12{1'b0}};
     localparam white = {12{1'b1}};
     reg [0:9] matrix [0:20];
-    reg [3:0] color_matrix [0:19][0:9];
+    reg [2:0] color_matrix [0:19][0:9];
     
     
     wire [4:0] y1p, y2p, y3p, y4p;

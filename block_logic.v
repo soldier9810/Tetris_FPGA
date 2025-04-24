@@ -55,9 +55,9 @@ module block_logic(
     
     always @(*) begin
         case (velocity_reg)
-            2'b00: speed_wanted = 25'b1111000000000000000000000;
-            2'b01: speed_wanted = 25'b1110000000000000000000000;
-            2'b10: speed_wanted = 25'b1000000010101010001000000;
+            2'b00: speed_wanted = 25'b1100000000000000000000000;
+            2'b01: speed_wanted = 25'b1000000000000000000000000;
+            2'b10: speed_wanted = 25'b0100000010101010001000000;
             2'b11: speed_wanted = 25'b0000010010101010001000000;
         endcase
     end
